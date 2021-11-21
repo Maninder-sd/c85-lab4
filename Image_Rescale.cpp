@@ -170,7 +170,7 @@ unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int d
 // for (x=0; __builtin_expect(x<dest_x,1 );x++)			// Loop over destination image
 //   for (y=0; __builtin_expect(y<(dest_y), 1) ;y++) //compiler flags to optimize
 x=0;y=-1;
-for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i++)
+for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3)
   {
     x++;
     if( __builtin_expect(x == dest_x, 0)){
@@ -230,9 +230,9 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i++)
    B=(unsigned char)((dy*((dx*RGB[11])+(1-dx)*RGB[8]))+((1-dy)*((dx*RGB[5])+(1-dx)*RGB[2])));
    // Store the final colour
   //  setPixel(dst,x,y,dest_x,R,G,B);
-   *(dst+(i*3)+0)=R;
-   *(dst+(i*3)+1)=G;
-   *(dst+(i*3)+2)=B;
+   *(dst+(i)+0)=R;
+   *(dst+(i)+1)=G;
+   *(dst+(i)+2)=B;
 
 
   // //
