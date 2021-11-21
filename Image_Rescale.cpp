@@ -140,9 +140,135 @@ void imageOutput(unsigned char *im, int sx, int sy, const char *name);
 **    result.
 *****************************************************/
 
+
+
 unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int dest_x, int dest_y)
 {
- return(NULL);		// Comment out, and write your fast routine here!
+ double step_x,step_y;			// Step increase as per instructions above
+ unsigned char R1,R2,R3,R4;		// Colours at the four neighbours
+ unsigned char G1,G2,G3,G4;
+ unsigned char B1,B2,B3,B4;
+ double RT1, GT1, BT1;			// Interpolated colours at T1 and T2
+ double RT2, GT2, BT2;
+ unsigned char R,G,B;			// Final colour at a destination pixel
+ unsigned char *dst;			// Destination image - must be allocated here! 
+ int x,y;				// Coordinates on destination image
+ double fx,fy;				// Corresponding coordinates on source image
+ double dx,dy;				// Fractional component of source image coordinates
+
+ dst=(unsigned char *)malloc(dest_x*dest_y*3*sizeof(unsigned char));   // Malloc is faster than calloc
+ if (!dst) return(NULL);					 
+
+ step_x=(double)(src_x-1)/(double)(dest_x-1);
+ step_y=(double)(src_y-1)/(double)(dest_y-1);
+
+int i;
+for(i=0; __builtin_expect((i< (dest_x*dest_y-1)),1)  ; i++){
+  x= i/dest_y;
+  y= i%dest_y;
+   fx=x*step_x;
+   fy=y*step_y;
+   dx=fx-(int)fx;
+   dy=fy-(int)fy;   
+   getPixel(src,floor(fx),floor(fy),src_x,&R1,&G1,&B1);	// get N1 colours
+   getPixel(src,ceil(fx),floor(fy),src_x,&R2,&G2,&B2);	// get N2 colours
+   getPixel(src,floor(fx),ceil(fy),src_x,&R3,&G3,&B3);	// get N3 colours
+   getPixel(src,ceil(fx),ceil(fy),src_x,&R4,&G4,&B4);	// get N4 colours
+   // Interpolate to get T1 and T2 colours
+   RT1=(dx*R2)+(1-dx)*R1;
+   GT1=(dx*G2)+(1-dx)*G1;
+   BT1=(dx*B2)+(1-dx)*B1;
+   RT2=(dx*R4)+(1-dx)*R3;
+   GT2=(dx*G4)+(1-dx)*G3;
+   BT2=(dx*B4)+(1-dx)*B3;
+   // Obtain final colour by interpolating between T1 and T2
+   R=(unsigned char)((dy*RT2)+((1-dy)*RT1));
+   G=(unsigned char)((dy*GT2)+((1-dy)*GT1));
+   B=(unsigned char)((dy*BT2)+((1-dy)*BT1));
+   // Store the final colour
+   setPixel(dst,x,y,dest_x,R,G,B);
+
+  i++;
+
+   x= i/dest_y;
+   y= i%dest_y;
+   fx=x*step_x;
+   fy=y*step_y;
+   dx=fx-(int)fx;
+   dy=fy-(int)fy;   
+   getPixel(src,floor(fx),floor(fy),src_x,&R1,&G1,&B1);	// get N1 colours
+   getPixel(src,ceil(fx),floor(fy),src_x,&R2,&G2,&B2);	// get N2 colours
+   getPixel(src,floor(fx),ceil(fy),src_x,&R3,&G3,&B3);	// get N3 colours
+   getPixel(src,ceil(fx),ceil(fy),src_x,&R4,&G4,&B4);	// get N4 colours
+   // Interpolate to get T1 and T2 colours
+   RT1=(dx*R2)+(1-dx)*R1;
+   GT1=(dx*G2)+(1-dx)*G1;
+   BT1=(dx*B2)+(1-dx)*B1;
+   RT2=(dx*R4)+(1-dx)*R3;
+   GT2=(dx*G4)+(1-dx)*G3;
+   BT2=(dx*B4)+(1-dx)*B3;
+   // Obtain final colour by interpolating between T1 and T2
+   R=(unsigned char)((dy*RT2)+((1-dy)*RT1));
+   G=(unsigned char)((dy*GT2)+((1-dy)*GT1));
+   B=(unsigned char)((dy*BT2)+((1-dy)*BT1));
+   // Store the final colour
+   setPixel(dst,x,y,dest_x,R,G,B);
+
+}
+
+// for (x=0; __builtin_expect(x<dest_x,1 );x++)			// Loop over destination image
+//   for (y=0; __builtin_expect(y<(dest_y-1), 1) ;y++) //compiler flags to optimize
+//   {
+//    fx=x*step_x;
+//    fy=y*step_y;
+//    dx=fx-(int)fx;
+//    dy=fy-(int)fy;   
+//    getPixel(src,floor(fx),floor(fy),src_x,&R1,&G1,&B1);	// get N1 colours
+//    getPixel(src,ceil(fx),floor(fy),src_x,&R2,&G2,&B2);	// get N2 colours
+//    getPixel(src,floor(fx),ceil(fy),src_x,&R3,&G3,&B3);	// get N3 colours
+//    getPixel(src,ceil(fx),ceil(fy),src_x,&R4,&G4,&B4);	// get N4 colours
+//    // Interpolate to get T1 and T2 colours
+//    RT1=(dx*R2)+(1-dx)*R1;
+//    GT1=(dx*G2)+(1-dx)*G1;
+//    BT1=(dx*B2)+(1-dx)*B1;
+//    RT2=(dx*R4)+(1-dx)*R3;
+//    GT2=(dx*G4)+(1-dx)*G3;
+//    BT2=(dx*B4)+(1-dx)*B3;
+//    // Obtain final colour by interpolating between T1 and T2
+//    R=(unsigned char)((dy*RT2)+((1-dy)*RT1));
+//    G=(unsigned char)((dy*GT2)+((1-dy)*GT1));
+//    B=(unsigned char)((dy*BT2)+((1-dy)*BT1));
+//    // Store the final colour
+//    setPixel(dst,x,y,dest_x,R,G,B);
+
+
+//   //
+//   y++; // Loop unrolling
+
+//    fx=x*step_x;
+//    fy=y*step_y;
+//    dx=fx-(int)fx;
+//    dy=fy-(int)fy;   
+//    getPixel(src,floor(fx),floor(fy),src_x,&R1,&G1,&B1);	// get N1 colours
+//    getPixel(src,ceil(fx),floor(fy),src_x,&R2,&G2,&B2);	// get N2 colours
+//    getPixel(src,floor(fx),ceil(fy),src_x,&R3,&G3,&B3);	// get N3 colours
+//    getPixel(src,ceil(fx),ceil(fy),src_x,&R4,&G4,&B4);	// get N4 colours
+//    // Interpolate to get T1 and T2 colours
+//    RT1=(dx*R2)+(1-dx)*R1;
+//    GT1=(dx*G2)+(1-dx)*G1;
+//    BT1=(dx*B2)+(1-dx)*B1;
+//    RT2=(dx*R4)+(1-dx)*R3;
+//    GT2=(dx*G4)+(1-dx)*G3;
+//    BT2=(dx*B4)+(1-dx)*B3;
+//    // Obtain final colour by interpolating between T1 and T2
+//    R=(unsigned char)((dy*RT2)+((1-dy)*RT1));
+//    G=(unsigned char)((dy*GT2)+((1-dy)*GT1));
+//    B=(unsigned char)((dy*BT2)+((1-dy)*BT1));
+//    // Store the final colour
+//    setPixel(dst,x,y,dest_x,R,G,B);
+
+//   }
+ return(dst);
 }
 
 /*****************************************************
@@ -154,7 +280,7 @@ unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int d
 **
 ** You may or may not want to read the actual code
 ** in vanilla_imageResize(). On the one hand,
-** reading it can give you ideas. On the other,
+** reading it can give you ideas. On the other,expected 10MB + malloc's overhead
 ** reading it can give you the WRONG ideas.
 *****************************************************/
 unsigned char *vanilla_rescaleImage(unsigned char *src, int src_x, int src_y, int dest_x, int dest_y)

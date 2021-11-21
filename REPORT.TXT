@@ -1,10 +1,10 @@
 CSC C85 - Code Optimization - 2021
 _______________________________________________________________________
 
-Team name:
+Team name: Team Snowforest
 
-Name 1 (last, first):
-Student number 1:
+Name 1 (last, first): Dhanauta, Maninder
+Student number 1: 1004877608
 
 Name 2 (last, first):
 Student number 2:
