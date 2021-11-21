@@ -158,6 +158,7 @@ unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int d
  double fx,fy;				// Corresponding coordinates on source image
  double dx,dy;				// Fractional component of source image coordinates
  int floor_fx, floor_fy, ceil_fx, ceil_fy;
+ int i;
 
  dst=(unsigned char *)malloc(dest_x*dest_y*3*sizeof(unsigned char));   // Malloc is faster than calloc
  if (!dst) return(NULL);					 
@@ -165,12 +166,20 @@ unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int d
  step_x=(double)(src_x-1)/(double)(dest_x-1);
  step_y=(double)(src_y-1)/(double)(dest_y-1);
 
-
-for (x=0; __builtin_expect(x<dest_x,1 );x++)			// Loop over destination image
-  for (y=0; __builtin_expect(y<(dest_y-1), 1) ;y++) //compiler flags to optimize
+  
+// for (x=0; __builtin_expect(x<dest_x,1 );x++)			// Loop over destination image
+//   for (y=0; __builtin_expect(y<(dest_y), 1) ;y++) //compiler flags to optimize
+for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i++)
   {
+
+    x=i/dest_y;
+    y= i % dest_y;
+
+
    fx=x*step_x;
    fy=y*step_y;
+
+   // these will reduce casting 
    floor_fx = fx;
    floor_fy = fy;
    ceil_fx = (fx == floor_fx) ? floor_fx : floor_fx+1;
@@ -181,7 +190,7 @@ for (x=0; __builtin_expect(x<dest_x,1 );x++)			// Loop over destination image
 
 
 
-  //  getPixel(src,floor(fx),floor(fy),src_x,&R1,&G1,&B1);	// get N1 colours
+  //  getPixel(src,floor(fx),floor(fy),src_x,&R1,&G1,&B1);	// function calls are expensive
    R1=*(src+(( floor_fx + (floor_fy*src_x))*3)+0);
    G1=*(src+(( floor_fx + (floor_fy*src_x))*3)+1);
    B1=*(src+(( floor_fx + (floor_fy*src_x))*3)+2);
@@ -220,29 +229,7 @@ for (x=0; __builtin_expect(x<dest_x,1 );x++)			// Loop over destination image
 
 
   // //
-  // y++; // Loop unrolling
 
-  //  fx=x*step_x;
-  //  fy=y*step_y;
-  //  dx=fx-(int)fx;
-  //  dy=fy-(int)fy;   
-  //  getPixel(src,floor(fx),floor(fy),src_x,&R1,&G1,&B1);	// get N1 colours
-  //  getPixel(src,ceil(fx),floor(fy),src_x,&R2,&G2,&B2);	// get N2 colours
-  //  getPixel(src,floor(fx),ceil(fy),src_x,&R3,&G3,&B3);	// get N3 colours
-  //  getPixel(src,ceil(fx),ceil(fy),src_x,&R4,&G4,&B4);	// get N4 colours
-  //  // Interpolate to get T1 and T2 colours
-  //  RT1=(dx*R2)+(1-dx)*R1;
-  //  GT1=(dx*G2)+(1-dx)*G1;
-  //  BT1=(dx*B2)+(1-dx)*B1;
-  //  RT2=(dx*R4)+(1-dx)*R3;
-  //  GT2=(dx*G4)+(1-dx)*G3;
-  //  BT2=(dx*B4)+(1-dx)*B3;
-  //  // Obtain final colour by interpolating between T1 and T2
-  //  R=(unsigned char)((dy*RT2)+((1-dy)*RT1));
-  //  G=(unsigned char)((dy*GT2)+((1-dy)*GT1));
-  //  B=(unsigned char)((dy*BT2)+((1-dy)*BT1));
-  //  // Store the final colour
-  //  setPixel(dst,x,y,dest_x,R,G,B);
 
   }
 
