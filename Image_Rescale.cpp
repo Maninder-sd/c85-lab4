@@ -169,11 +169,16 @@ unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int d
   
 // for (x=0; __builtin_expect(x<dest_x,1 );x++)			// Loop over destination image
 //   for (y=0; __builtin_expect(y<(dest_y), 1) ;y++) //compiler flags to optimize
+x=0;y=-1;
 for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i++)
   {
-
-    x=i/dest_y;
-    y= i % dest_y;
+    y++;
+    if(y == dest_y){
+      y=0;
+      x++;
+    }
+    // x=i/dest_y;
+    // y= i % dest_y;
 
 
    fx=x*step_x;
@@ -182,6 +187,8 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i++)
    // these will reduce casting 
    floor_fx = fx;
    floor_fy = fy;
+
+   
    ceil_fx = (fx == floor_fx) ? floor_fx : floor_fx+1;
    ceil_fy = (fy == floor_fy) ? floor_fy  : floor_fy+1;
 
