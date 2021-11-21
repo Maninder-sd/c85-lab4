@@ -170,7 +170,8 @@ unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int d
 // for (x=0; __builtin_expect(x<dest_x,1 );x++)			// Loop over destination image
 //   for (y=0; __builtin_expect(y<(dest_y), 1) ;y++) //compiler flags to optimize
 x=0;y=-1;
-for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i++)
+for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i++) // single loop means less branching 
+                                                        // also, this expect will be wrong only once
   {
     y++;
     if(y == dest_y){
@@ -188,9 +189,12 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i++)
    floor_fx = fx;
    floor_fy = fy;
 
-   
-   ceil_fx = (fx == floor_fx) ? floor_fx : floor_fx+1;
-   ceil_fy = (fy == floor_fy) ? floor_fy  : floor_fy+1;
+
+
+
+
+  //  ceil_fx = (fx == floor_fx) ? floor_fx : floor_fx+1;
+  //  ceil_fy = (fy == floor_fy) ? floor_fy  : floor_fy+1;
 
    dx=fx-floor_fx;
    dy=fy-floor_fy;   
@@ -198,24 +202,51 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i++)
 
 
   //  getPixel(src,floor(fx),floor(fy),src_x,&R1,&G1,&B1);	// function calls are expensive
-   R1=*(src+(( floor_fx + (floor_fy*src_x))*3)+0);
-   G1=*(src+(( floor_fx + (floor_fy*src_x))*3)+1);
-   B1=*(src+(( floor_fx + (floor_fy*src_x))*3)+2);
+   R2 = R1=*(src+(( floor_fx + (floor_fy*src_x))*3)+0);
+   G2 = G1=*(src+(( floor_fx + (floor_fy*src_x))*3)+1);
+   B2 = B1=*(src+(( floor_fx + (floor_fy*src_x))*3)+2);
 
-  //  getPixel(src,ceil(fx),floor(fy),src_x,&R2,&G2,&B2);	// get N2 colours
-   R2=*(src+(( ceil_fx + (floor_fy*src_x))*3)+0);
-   G2=*(src+(( ceil_fx + (floor_fy*src_x))*3)+1);
-   B2=*(src+(( ceil_fx + (floor_fy*src_x))*3)+2);
+  // R2 = R1;
+  // G2 = G1;
+  // B2 = B1;
+  if(fx != floor_fx){ // then R1 and R2 are same, no need to read twice
+                      // QUESTION: what should my expect be?
+   //  getPixel(src,ceil(fx),floor(fy),src_x,&R2,&G2,&B2);	// get N2 colours
+   R2=*(src+(( floor_fx+1 + (floor_fy*src_x))*3)+0);
+   G2=*(src+(( floor_fx+1 + (floor_fy*src_x))*3)+1);
+   B2=*(src+(( floor_fx+1 + (floor_fy*src_x))*3)+2);
+  }
 
-  //  getPixel(src,floor(fx),ceil(fy),src_x,&R3,&G3,&B3);	// get N3 colours
-   R3=*(src+(( floor_fx + (ceil_fy*src_x))*3)+0);
-   G3=*(src+(( floor_fx + (ceil_fy*src_x))*3)+1);
-   B3=*(src+(( floor_fx + (ceil_fy*src_x))*3)+2);
+    R3 = R1;
+    G3 = G1;
+    B3 = B1;
 
-  //  getPixel(src,ceil(fx),ceil(fy),src_x,&R4,&G4,&B4);	// get N4 colours
-   R4=*(src+(( ceil_fx + (ceil_fy*src_x))*3)+0);
-   G4=*(src+(( ceil_fx + (ceil_fy*src_x))*3)+1);
-   B4=*(src+(( ceil_fx + (ceil_fy*src_x))*3)+2);
+    R4 = R2;
+    G4 = G2;
+    B4 = B2;
+  if(fy != floor_fy){
+    //  getPixel(src,floor(fx),ceil(fy),src_x,&R3,&G3,&B3);	// get N3 colours
+    R3=*(src+(( floor_fx + ((floor_fy+1)*src_x))*3)+0);
+    G3=*(src+(( floor_fx + ((floor_fy+1)*src_x))*3)+1);
+    B3=*(src+(( floor_fx + ((floor_fy+1)*src_x))*3)+2);
+    R4 = R1;
+    G4 = G1;
+    B4 = B1;
+  }
+
+      if(fx != floor_fx && y != floor_fy){ // then R1 and R2 are same, no need to read twice
+                        // QUESTION: what should my expect be?
+
+        //  getPixel(src,ceil(fx),ceil(fy),src_x,&R4,&G4,&B4);	// get N4 colours
+      R4=*(src+(( floor_fx+1 + ((floor_fy+1)*src_x))*3)+0);
+      G4=*(src+(( floor_fx+1 + ((floor_fy+1)*src_x))*3)+1);
+      B4=*(src+(( floor_fx+1 + ((floor_fy+1)*src_x))*3)+2); 
+    }
+
+
+
+
+
 
    // Interpolate to get T1 and T2 colours
    RT1=(dx*R2)+(1-dx)*R1;
