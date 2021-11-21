@@ -146,20 +146,19 @@ unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int d
 {
  double step_x,step_y;			// Step increase as per instructions above
  unsigned char RGB[12];     // single allocation for all variables R1,G1,B1,R2...
- int indexes[12];
+//  int indexes[12];
 //  unsigned char R1,R2,R3,R4;		// Colours at the four neighbours
 //  unsigned char G1,G2,G3,G4;
 //  unsigned char B1,B2,B3,B4;
- double RT1, GT1, BT1;			// Interpolated colours at T1 and T2
- double RT2, GT2, BT2;
-//  unsigned char RGB_dest[3]; // single allocation for all variables
- unsigned char R,G,B;			// Final colour at a destination pixel
+//  double RT1, GT1, BT1;			// Interpolated colours at T1 and T2
+//  double RT2, GT2, BT2;
+//  unsigned char R,G,B;			// Final colour at a destination pixel
  unsigned char *dst;			// Destination image - must be allocated here! 
- int x,y;				// Coordinates on destination image
+//  int x,y;				// Coordinates on destination image
  double fx,fy;				// Corresponding coordinates on source image
  double dx,dy;				// Fractional component of source image coordinates
  int floor_fx, floor_fy, ceil_fx, ceil_fy;
- int i;
+ int i, dest_size = dest_x*dest_y;
 
  dst=(unsigned char *)malloc(dest_x*dest_y*3*sizeof(unsigned char));   // Malloc is faster than calloc
  if (!dst) return(NULL);					 
@@ -170,20 +169,22 @@ unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int d
   
 // for (x=0; __builtin_expect(x<dest_x,1 );x++)			// Loop over destination image
 //   for (y=0; __builtin_expect(y<(dest_y), 1) ;y++) //compiler flags to optimize
-x=0;y=-1;
-for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3)
+// x=0;y=-1;
+for(i=0; __builtin_expect ( i<(dest_size) ,1 );i+=3)
   {
-    x++;
-    if( __builtin_expect(x == dest_x, 0)){
-      x=0;
-      y++;
+  //   x++;
+  //   if( __builtin_expect(x == dest_x, 0)){
+  //     x=0;
+  //     y++;
+  //   }
+  //  fx=x*step_x;  // ODO: reduce this even more 
+  //  fy=y*step_y;
+
+   fx +=step_x;
+   if( __builtin_expect(fx >= dest_x, 0)){ //CAREFUL of floating points
+      fx=0;
+      fy+=step_y;
     }
-    // x=i/dest_y;
-    // y= i % dest_y;
-
-
-   fx=x*step_x;
-   fy=y*step_y;
 
    // these will reduce casting 
    floor_fx = fx;
@@ -236,9 +237,9 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3)
   //  B=(unsigned char)((dy*((dx*RGB[11])+(1-dx)*RGB[8]))+((1-dy)*((dx*RGB[5])+(1-dx)*RGB[2])));
 
   //simplified formulas to reduce multiplications
-   R=(unsigned char)(  dx*dy*(RGB[9] -RGB[6] -RGB[3] -RGB[0] ) + dy*(RGB[6] -RGB[0]) + dx*(RGB[3] -RGB[0]) + RGB[0]  ); 
-   G=(unsigned char)(  dx*dy*(RGB[10] -RGB[7] -RGB[4] -RGB[1] ) + dy*(RGB[7] -RGB[1]) + dx*(RGB[4] -RGB[1]) + RGB[1]  );
-   B=(unsigned char)(  dx*dy*(RGB[11] -RGB[8] -RGB[5] -RGB[2] ) + dy*(RGB[8] -RGB[2]) + dx*(RGB[5] -RGB[2]) + RGB[2]  );
+  //  R=(unsigned char)(  dx*dy*(RGB[9] -RGB[6] -RGB[3] -RGB[0] ) + dy*(RGB[6] -RGB[0]) + dx*(RGB[3] -RGB[0]) + RGB[0]  ); 
+  //  G=(unsigned char)(  dx*dy*(RGB[10] -RGB[7] -RGB[4] -RGB[1] ) + dy*(RGB[7] -RGB[1]) + dx*(RGB[4] -RGB[1]) + RGB[1]  );
+  //  B=(unsigned char)(  dx*dy*(RGB[11] -RGB[8] -RGB[5] -RGB[2] ) + dy*(RGB[8] -RGB[2]) + dx*(RGB[5] -RGB[2]) + RGB[2]  );
 
 
   //  R=(unsigned char)((dy*RT2)+((1-dy)*RT1));
@@ -248,9 +249,9 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3)
   //  setPixel(dst,x,y,dest_x,R,G,B);
 
   // using i so no need to calculate index
-   *(dst+(i)+0)=R;
-   *(dst+(i)+1)=G;
-   *(dst+(i)+2)=B;
+   *(dst+(i)+0)=(  dx*dy*(RGB[9] -RGB[6] -RGB[3] -RGB[0] ) + dy*(RGB[6] -RGB[0]) + dx*(RGB[3] -RGB[0]) + RGB[0]  ); //R
+   *(dst+(i)+1)=(  dx*dy*(RGB[10] -RGB[7] -RGB[4] -RGB[1] ) + dy*(RGB[7] -RGB[1]) + dx*(RGB[4] -RGB[1]) + RGB[1]  ); //G
+   *(dst+(i)+2)=(  dx*dy*(RGB[11] -RGB[8] -RGB[5] -RGB[2] ) + dy*(RGB[8] -RGB[2]) + dx*(RGB[5] -RGB[2]) + RGB[2]  ); //B
 
 
   // //
