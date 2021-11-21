@@ -145,10 +145,10 @@ void imageOutput(unsigned char *im, int sx, int sy, const char *name);
 unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int dest_x, int dest_y)
 {
  double step_x,step_y;			// Step increase as per instructions above
-//  unsigned char RGB[12];     // single allocation for all variables
- unsigned char R1,R2,R3,R4;		// Colours at the four neighbours
- unsigned char G1,G2,G3,G4;
- unsigned char B1,B2,B3,B4;
+ unsigned char RGB[12];     // single allocation for all variables R1,G1,B1,R2...
+//  unsigned char R1,R2,R3,R4;		// Colours at the four neighbours
+//  unsigned char G1,G2,G3,G4;
+//  unsigned char B1,B2,B3,B4;
  double RT1, GT1, BT1;			// Interpolated colours at T1 and T2
  double RT2, GT2, BT2;
 //  unsigned char RGB_dest[3]; // single allocation for all variables
@@ -172,10 +172,10 @@ unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int d
 x=0;y=-1;
 for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i++)
   {
-    y++;
-    if(y == dest_y){
-      y=0;
-      x++;
+    x++;
+    if( __builtin_expect(x == dest_x, 0)){
+      x=0;
+      y++;
     }
     // x=i/dest_y;
     // y= i % dest_y;
@@ -198,41 +198,41 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i++)
 
 
   //  getPixel(src,floor(fx),floor(fy),src_x,&R1,&G1,&B1);	// function calls are expensive
-   R1=*(src+(( floor_fx + (floor_fy*src_x))*3)+0);
-   G1=*(src+(( floor_fx + (floor_fy*src_x))*3)+1);
-   B1=*(src+(( floor_fx + (floor_fy*src_x))*3)+2);
+   RGB[0]=*(src+(( floor_fx + (floor_fy*src_x))*3)+0); //R1
+   RGB[1]=*(src+(( floor_fx + (floor_fy*src_x))*3)+1); //G1 
+   RGB[2]=*(src+(( floor_fx + (floor_fy*src_x))*3)+2); //B1
 
   //  getPixel(src,ceil(fx),floor(fy),src_x,&R2,&G2,&B2);	// get N2 colours
-   R2=*(src+(( ceil_fx + (floor_fy*src_x))*3)+0);
-   G2=*(src+(( ceil_fx + (floor_fy*src_x))*3)+1);
-   B2=*(src+(( ceil_fx + (floor_fy*src_x))*3)+2);
+   RGB[3]=*(src+(( ceil_fx + (floor_fy*src_x))*3)+0);  //R2
+   RGB[4]=*(src+(( ceil_fx + (floor_fy*src_x))*3)+1);  //G2
+   RGB[5]=*(src+(( ceil_fx + (floor_fy*src_x))*3)+2);  //B2
 
   //  getPixel(src,floor(fx),ceil(fy),src_x,&R3,&G3,&B3);	// get N3 colours
-   R3=*(src+(( floor_fx + (ceil_fy*src_x))*3)+0);
-   G3=*(src+(( floor_fx + (ceil_fy*src_x))*3)+1);
-   B3=*(src+(( floor_fx + (ceil_fy*src_x))*3)+2);
+   RGB[6]=*(src+(( floor_fx + (ceil_fy*src_x))*3)+0); //R3
+   RGB[7]=*(src+(( floor_fx + (ceil_fy*src_x))*3)+1); //G3
+   RGB[8]=*(src+(( floor_fx + (ceil_fy*src_x))*3)+2); //B3
 
   //  getPixel(src,ceil(fx),ceil(fy),src_x,&R4,&G4,&B4);	// get N4 colours
-   R4=*(src+(( ceil_fx + (ceil_fy*src_x))*3)+0);
-   G4=*(src+(( ceil_fx + (ceil_fy*src_x))*3)+1);
-   B4=*(src+(( ceil_fx + (ceil_fy*src_x))*3)+2);
+   RGB[9]=*(src+(( ceil_fx + (ceil_fy*src_x))*3)+0);  //R4
+   RGB[10]=*(src+(( ceil_fx + (ceil_fy*src_x))*3)+1); //G4
+   RGB[11]=*(src+(( ceil_fx + (ceil_fy*src_x))*3)+2);  //B4
 
    // Interpolate to get T1 and T2 colours
-   RT1=(dx*R2)+(1-dx)*R1;
-   GT1=(dx*G2)+(1-dx)*G1;
-   BT1=(dx*B2)+(1-dx)*B1;
-   RT2=(dx*R4)+(1-dx)*R3;
-   GT2=(dx*G4)+(1-dx)*G3;
-   BT2=(dx*B4)+(1-dx)*B3;
+  //  RT1=((dx*RGB[3])+(1-dx)*RGB[0]);
+  //  GT1=((dx*RGB[4])+(1-dx)*RGB[1]);
+  //  BT1=((dx*RGB[5])+(1-dx)*RGB[2]);
+  //  RT2=((dx*RGB[9])+(1-dx)*RGB[6]);
+  //  GT2=((dx*RGB[10])+(1-dx)*RGB[7]);
+  //  BT2=((dx*RGB[11])+(1-dx)*RGB[8]);
    // Obtain final colour by interpolating between T1 and T2
-   R=(unsigned char)((dy*RT2)+((1-dy)*RT1));
-   G=(unsigned char)((dy*GT2)+((1-dy)*GT1));
-   B=(unsigned char)((dy*BT2)+((1-dy)*BT1));
+   R=(unsigned char)((dy*((dx*RGB[9])+(1-dx)*RGB[6]))+((1-dy)*((dx*RGB[3])+(1-dx)*RGB[0])));
+   G=(unsigned char)((dy*((dx*RGB[10])+(1-dx)*RGB[7]))+((1-dy)*((dx*RGB[4])+(1-dx)*RGB[1])));
+   B=(unsigned char)((dy*((dx*RGB[11])+(1-dx)*RGB[8]))+((1-dy)*((dx*RGB[5])+(1-dx)*RGB[2])));
    // Store the final colour
   //  setPixel(dst,x,y,dest_x,R,G,B);
-   *(dst+((x+(y*dest_x))*3)+0)=R;
-   *(dst+((x+(y*dest_x))*3)+1)=G;
-   *(dst+((x+(y*dest_x))*3)+2)=B;
+   *(dst+(i*3)+0)=R;
+   *(dst+(i*3)+1)=G;
+   *(dst+(i*3)+2)=B;
 
 
   // //
