@@ -149,8 +149,8 @@ unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int d
 //  unsigned char R1,R2,R3,R4;		// Colours at the four neighbours
 //  unsigned char G1,G2,G3,G4;
 //  unsigned char B1,B2,B3,B4;
- double RT1, GT1, BT1;			// Interpolated colours at T1 and T2
- double RT2, GT2, BT2;
+//  double RT1, GT1, BT1;			// Interpolated colours at T1 and T2
+//  double RT2, GT2, BT2;
 //  unsigned char RGB_dest[3]; // single allocation for all variables
  unsigned char R,G,B;			// Final colour at a destination pixel
  unsigned char *dst;			// Destination image - must be allocated here! 
@@ -201,35 +201,40 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3)
    // these will reduce casting 
    floor_fx = fx;
    floor_fy = fy;
-
-   
-   ceil_fx = (fx == floor_fx) ? floor_fx : floor_fx+1;
-   ceil_fy = (fy == floor_fy) ? floor_fy  : floor_fy+1;
-
    dx=fx-floor_fx;
-   dy=fy-floor_fy;   
+   dy=fy-floor_fy; 
+   
+   ceil_fx = (fx == floor_fx) ? 3*floor_fx : 3*(floor_fx+1);
+   ceil_fy = (fy == floor_fy) ? 3*floor_fy *src_x : 3*(floor_fy+1)*src_x;
+  //  ceil_fx = (fx == floor_fx) ? 3*floor_fx : 3*(floor_fx+1);
+  //  ceil_fy = (fy == floor_fy) ? 3*floor_fy  : 3*(floor_fy+1);
+   floor_fx *=3;
+   floor_fy *=3*src_x;
+
+
+  
 
 
 
   //  getPixel(src,floor(fx),floor(fy),src_x,&R1,&G1,&B1);	// function calls are expensive
-   RGB[0]=*(src+(( floor_fx + (floor_fy*src_x))*3)+0); //R1
-   RGB[1]=*(src+(( floor_fx + (floor_fy*src_x))*3)+1); //G1 
-   RGB[2]=*(src+(( floor_fx + (floor_fy*src_x))*3)+2); //B1
+   RGB[0]=*(src+( floor_fx + (floor_fy))+0); //R1
+   RGB[1]=*(src+( floor_fx + (floor_fy))+1); //G1 
+   RGB[2]=*(src+( floor_fx + (floor_fy))+2); //B1
 
   //  getPixel(src,ceil(fx),floor(fy),src_x,&R2,&G2,&B2);	// get N2 colours
-   RGB[3]=*(src+(( ceil_fx + (floor_fy*src_x))*3)+0);  //R2
-   RGB[4]=*(src+(( ceil_fx + (floor_fy*src_x))*3)+1);  //G2
-   RGB[5]=*(src+(( ceil_fx + (floor_fy*src_x))*3)+2);  //B2
+   RGB[3]=*(src+( ceil_fx + (floor_fy))+0);  //R2
+   RGB[4]=*(src+( ceil_fx + (floor_fy))+1);  //G2
+   RGB[5]=*(src+( ceil_fx + (floor_fy))+2);  //B2
 
   //  getPixel(src,floor(fx),ceil(fy),src_x,&R3,&G3,&B3);	// get N3 colours
-   RGB[6]=*(src+(( floor_fx + (ceil_fy*src_x))*3)+0); //R3
-   RGB[7]=*(src+(( floor_fx + (ceil_fy*src_x))*3)+1); //G3
-   RGB[8]=*(src+(( floor_fx + (ceil_fy*src_x))*3)+2); //B3
+   RGB[6]=*(src+( floor_fx + (ceil_fy))+0); //R3
+   RGB[7]=*(src+( floor_fx + (ceil_fy))+1); //G3
+   RGB[8]=*(src+( floor_fx + (ceil_fy))+2); //B3
 
   //  getPixel(src,ceil(fx),ceil(fy),src_x,&R4,&G4,&B4);	// get N4 colours
-   RGB[9]=*(src+(( ceil_fx + (ceil_fy*src_x))*3)+0);  //R4
-   RGB[10]=*(src+(( ceil_fx + (ceil_fy*src_x))*3)+1); //G4
-   RGB[11]=*(src+(( ceil_fx + (ceil_fy*src_x))*3)+2);  //B4
+   RGB[9]=*(src+( ceil_fx + (ceil_fy))+0);  //R4
+   RGB[10]=*(src+( ceil_fx + (ceil_fy))+1); //G4
+   RGB[11]=*(src+( ceil_fx + (ceil_fy))+2);  //B4
 
    // Interpolate to get T1 and T2 colours
   //  RT1=((dx*RGB[3])+(1-dx)*RGB[0]);
