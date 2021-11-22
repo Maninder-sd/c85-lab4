@@ -146,15 +146,10 @@ unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int d
 {
  double step_x,step_y;			// Step increase as per instructions above
  unsigned char RGB[12];     // single allocation for all variables R1,G1,B1,R2...
-//  unsigned char R1,R2,R3,R4;		// Colours at the four neighbours
-//  unsigned char G1,G2,G3,G4;
-//  unsigned char B1,B2,B3,B4;
-//  double RT1, GT1, BT1;			// Interpolated colours at T1 and T2
-//  double RT2, GT2, BT2;
-//  unsigned char RGB_dest[3]; // single allocation for all variables
  unsigned char R,G,B;			// Final colour at a destination pixel
  unsigned char *dst;			// Destination image - must be allocated here! 
- int x,y;				// Coordinates on destination image
+ int x;
+//  int y;				// Coordinates on destination image
  double fx,fy;				// Corresponding coordinates on source image
  double dx,dy;				// Fractional component of source image coordinates
  int floor_fx, floor_fy, ceil_fx, ceil_fy;
@@ -166,37 +161,19 @@ unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int d
  step_x=(double)(src_x-1)/(double)(dest_x-1);
  step_y=(double)(src_y-1)/(double)(dest_y-1);
 
-  
-// for (x=0; __builtin_expect(x<dest_x,1 );x++)			// Loop over destination image
-//   for (y=0; __builtin_expect(y<(dest_y), 1) ;y++) //compiler flags to optimize
-x=-1;y=0;
+x=-1;
 fx = -step_x;
 fy=0;
-for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3)
+for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3) //compiler flags to optimize
   {
     x++;
     fx+=step_x;
     if( __builtin_expect(x == dest_x, 0)){
       x=0;
-      y++;
       fx=0;
       fy+=step_y;
     }
 
-
-
-  //  fx=x*step_x;
-  //  fy=y*step_y;
-
-
-// skips unneccesarry x/y variables
-// no more mulitplication needed
-  // fx+=step_x;
-  // if (fx >= step_x*dest_x){
-  //    fx = 0;
-  //    fy+=step_y;
-  //  }
-   
 
    // these will reduce casting 
    floor_fx = fx;
@@ -206,15 +183,8 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3)
    
    ceil_fx = (fx == floor_fx) ? 3*floor_fx : 3*(floor_fx+1);
    ceil_fy = (fy == floor_fy) ? 3*floor_fy *src_x : 3*(floor_fy+1)*src_x;
-  //  ceil_fx = (fx == floor_fx) ? 3*floor_fx : 3*(floor_fx+1);
-  //  ceil_fy = (fy == floor_fy) ? 3*floor_fy  : 3*(floor_fy+1);
    floor_fx *=3;
    floor_fy *=3*src_x;
-
-
-  
-
-
 
   //  getPixel(src,floor(fx),floor(fy),src_x,&R1,&G1,&B1);	// function calls are expensive
    RGB[0]=*(src+( floor_fx + (floor_fy))+0); //R1
@@ -237,16 +207,6 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3)
    RGB[11]=*(src+( ceil_fx + (ceil_fy))+2);  //B4
 
    // Interpolate to get T1 and T2 colours
-  //  RT1=((dx*RGB[3])+(1-dx)*RGB[0]);
-  //  GT1=((dx*RGB[4])+(1-dx)*RGB[1]);
-  //  BT1=((dx*RGB[5])+(1-dx)*RGB[2]);
-  //  RT2=((dx*RGB[9])+(1-dx)*RGB[6]);
-  //  GT2=((dx*RGB[10])+(1-dx)*RGB[7]);
-  //  BT2=((dx*RGB[11])+(1-dx)*RGB[8]);
-   // Obtain final colour by interpolating between T1 and T2
-  //  R=(unsigned char)((dy*((dx*RGB[9])+(1-dx)*RGB[6]))+((1-dy)*((dx*RGB[3])+(1-dx)*RGB[0])));
-  //  G=(unsigned char)((dy*((dx*RGB[10])+(1-dx)*RGB[7]))+((1-dy)*((dx*RGB[4])+(1-dx)*RGB[1])));
-  //  B=(unsigned char)((dy*((dx*RGB[11])+(1-dx)*RGB[8]))+((1-dy)*((dx*RGB[5])+(1-dx)*RGB[2])));
 
      //simplified formulas to reduce multiplications
    R=(unsigned char)(  dx*dy*(RGB[9] -RGB[6] -RGB[3] +RGB[0] ) + dy*(RGB[6] -RGB[0]) + dx*(RGB[3] -RGB[0]) + RGB[0]  ); 
@@ -258,10 +218,6 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3)
    *(dst+(i)+0)=R;
    *(dst+(i)+1)=G;
    *(dst+(i)+2)=B;
-
-
-  // //
-
 
   }
 
