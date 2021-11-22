@@ -244,9 +244,15 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3)
   //  GT2=((dx*RGB[10])+(1-dx)*RGB[7]);
   //  BT2=((dx*RGB[11])+(1-dx)*RGB[8]);
    // Obtain final colour by interpolating between T1 and T2
-   R=(unsigned char)((dy*((dx*RGB[9])+(1-dx)*RGB[6]))+((1-dy)*((dx*RGB[3])+(1-dx)*RGB[0])));
-   G=(unsigned char)((dy*((dx*RGB[10])+(1-dx)*RGB[7]))+((1-dy)*((dx*RGB[4])+(1-dx)*RGB[1])));
-   B=(unsigned char)((dy*((dx*RGB[11])+(1-dx)*RGB[8]))+((1-dy)*((dx*RGB[5])+(1-dx)*RGB[2])));
+  //  R=(unsigned char)((dy*((dx*RGB[9])+(1-dx)*RGB[6]))+((1-dy)*((dx*RGB[3])+(1-dx)*RGB[0])));
+  //  G=(unsigned char)((dy*((dx*RGB[10])+(1-dx)*RGB[7]))+((1-dy)*((dx*RGB[4])+(1-dx)*RGB[1])));
+  //  B=(unsigned char)((dy*((dx*RGB[11])+(1-dx)*RGB[8]))+((1-dy)*((dx*RGB[5])+(1-dx)*RGB[2])));
+
+     //simplified formulas to reduce multiplications
+   R=(unsigned char)(  dx*dy*(RGB[9] -RGB[6] -RGB[3] +RGB[0] ) + dy*(RGB[6] -RGB[0]) + dx*(RGB[3] -RGB[0]) + RGB[0]  ); 
+   G=(unsigned char)(  dx*dy*(RGB[10] -RGB[7] -RGB[4] +RGB[1] ) + dy*(RGB[7] -RGB[1]) + dx*(RGB[4] -RGB[1]) + RGB[1]  );
+   B=(unsigned char)(  dx*dy*(RGB[11] -RGB[8] -RGB[5] +RGB[2] ) + dy*(RGB[8] -RGB[2]) + dx*(RGB[5] -RGB[2]) + RGB[2]  );
+
    // Store the final colour
   //  setPixel(dst,x,y,dest_x,R,G,B);
    *(dst+(i)+0)=R;
