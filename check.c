@@ -9,7 +9,7 @@ unsigned char *readPPMimage(const char *filename, int *sx, int *sy)
 {
  // Reads an image from a .ppm file. A .ppm file is a very simple image representation
  // format with a text header followed by the binary RGB data at 24bits per pixel.
- // The header has the following form:
+ // The header  has the following form:
  //
  // P6
  // # Optionally, one or more comment lines preceded by '#'
