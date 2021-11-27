@@ -51,6 +51,27 @@ a) Look at the profiler output for vanilla_imageRescale(). Identify the
    For each line, explain why the line creates a bottleneck (in terms
    of what you know about CPU architecture). I want specific reasons
    why a line you listed takes a large chunk of CPU time.
+ 
+ ANS:
+ 
+#line CEst Source
+418 6.45    getPixel(src,floor(fx),floor(fy),src_x,&R1,&G1,&B1);        // get N1 colours
+    Function calls are expensive because it requires adding to the stack frame 
+    I got rid of the function call by copy pasting the function's content and remove floor() function call as well 
+420 5.68    getPixel(src,floor(fx),ceil(fy),src_x,&R3,&G3,&B3);        // get N3 colours  
+    Function calls are expensive because it requires adding to the stack frame 
+    I got rid of the function call by copy pasting the function's content and remove floor() function call as well 
+443 4.30    *(R)=*(image+((x+(y*sx))*3)+0);
+    there are many operations (including multiplication) and reading/writing happening
+    We will move the repetitive pointer arithmatic ["i" will be the value"(x+(y*sx))*3)"] into a variable and read from variable 
+453 4.43     *(image+((x+(y*sx))*3)+1)=G;
+    there are many operations (including multiplication) and reading/writing happening
+    We will move the repetitive pointer arithmatic "((x+(y*sx))*3)" into a variable and read from variable 
+427 4.23      GT2=(dx*G4)+(1-dx)*G3;
+428 3.44      BT2=(dx*B4)+(1-dx)*B3;
+426 3.42     RT2=(dx*R4)+(1-dx)*R3;
+423 3.41        RT1=(dx*R2)+(1-dx)*R1;
+425 3.41           BT1=(dx*B2)+(1-dx)*B1;
 
 b) For each of the lines in a)
 
@@ -62,6 +83,10 @@ b) For each of the lines in a)
 
 c) List any other optimizations you performed in your code and why they
    help increase speed
+   
+   We removed the two loops and made it into a single loop. This reduses the number of branches. Since this condition is only false once, the branch is also predictable and misses only once. 
+   
+   We r
 
 d) Is there any part of the vanilla code that could not be optimized
    at all? if so, which?

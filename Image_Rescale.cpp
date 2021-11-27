@@ -145,7 +145,7 @@ void imageOutput(unsigned char *im, int sx, int sy, const char *name);
 unsigned char *fast_rescaleImage(unsigned char *src, int src_x, int src_y, int dest_x, int dest_y)
 {
  double step_x,step_y;			// Step increase as per instructions above
- unsigned char RGB[12];     // single allocation for all variables R1,G1,B1,R2...
+ unsigned char RGB[12];     // single allocation for all variables R1,G1,B1,R2..., should make caching easier
  unsigned char *indexes[4];
  unsigned char R,G,B;			// Final colour at a destination pixel
  unsigned char *dst;			// Destination image - must be allocated here! 
@@ -168,21 +168,24 @@ fx = -step_x;
 fy=0;
 for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3) //compiler flags to optimize
   {
+
+    // Instead of multiplying to find x*step_x to get fx, simply adds it. This reduses multiplication
     x++;
     fx+=step_x;
-    if( __builtin_expect(x == dest_x, 0)){
+    if( __builtin_expect(x == dest_x, 0)){ 
       x=0;
       fx=0;
       fy+=step_y;
     }
 
 
-   // these will reduce casting 
+   // these will reduce casting. IN vanilla, casting is done implicitly/explicitly multiple times. 
    floor_fx = fx;
    floor_fy = fy;
    dx=fx-floor_fx;
    dy=fy-floor_fy; 
    
+   // To avoid function calls to floor() and ceil()
    ceil_fx = (fx == floor_fx) ? 3*floor_fx : 3*(floor_fx+1);
    ceil_fy = (fy == floor_fy) ? 3*floor_fy *src_x : 3*(floor_fy+1)*src_x;
    floor_fx *=3;
@@ -193,6 +196,7 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3) //compiler flags to opt
   // indexes[2]=src+ floor_fx + ceil_fy;
   // indexes[3]=src+ ceil_fx + ceil_fy;
 
+  // This commputes the needed pointer values once, so that we dont need to do it again. Reduces number of operatoins performed
   indexes[0]= src+ floor_fy;
   indexes[1]= indexes[0]+ ceil_fx;
   indexes[0]+=floor_fx;
@@ -220,6 +224,8 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3) //compiler flags to opt
    RGB[10]=*(indexes[3]+1); //G4
    RGB[11]=*(indexes[3]+2);  //B4
 
+
+  // We tried reducing number of read operations but realized it ends up being the same amount
   // if (fy != floor_fy){
 
   // }else{
@@ -238,13 +244,14 @@ for(i=0; __builtin_expect ( i<(dest_x*dest_y) ,1 );i+=3) //compiler flags to opt
 
    // Interpolate to get T1 and T2 colours
 
-     //simplified formulas to reduce multiplications
+     //simplified formulas to reduce multiplications/number of operations
    R=(unsigned char)(  dx*dy*(RGB[9] -RGB[6] -RGB[3] +RGB[0] ) + dy*(RGB[6] -RGB[0]) + dx*(RGB[3] -RGB[0]) + RGB[0]  ); 
    G=(unsigned char)(  dx*dy*(RGB[10] -RGB[7] -RGB[4] +RGB[1] ) + dy*(RGB[7] -RGB[1]) + dx*(RGB[4] -RGB[1]) + RGB[1]  );
    B=(unsigned char)(  dx*dy*(RGB[11] -RGB[8] -RGB[5] +RGB[2] ) + dy*(RGB[8] -RGB[2]) + dx*(RGB[5] -RGB[2]) + RGB[2]  );
 
    // Store the final colour
   //  setPixel(dst,x,y,dest_x,R,G,B);
+    // writing is reduced since index i already gets us the pointer offset
    *(dst+(i)+0)=R;
    *(dst+(i)+1)=G;
    *(dst+(i)+2)=B;
